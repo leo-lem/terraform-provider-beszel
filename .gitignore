@@ -1,0 +1,6 @@
+/bin/
+/dist/
+/gateway
+*.log
+.env
+.DS_Store
