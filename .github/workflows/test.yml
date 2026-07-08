@@ -32,7 +32,9 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Start Beszel hub and provision test data
-        run: ./scripts/testacc-up.sh | sed 's/^export //' | tr -d '"' >> "$GITHUB_ENV"
+        run: |
+          set -o pipefail
+          ./scripts/testacc-up.sh | sed 's/^export //' | tr -d '"' >> "$GITHUB_ENV"
       - name: Run acceptance tests
         run: TF_ACC=1 go test ./... -v -timeout 20m
       - name: Tear down Beszel hub
