@@ -1,6 +1,25 @@
 /bin/
 /dist/
-/gateway
 *.log
 .env
 .DS_Store
+
+# terraform-provider-beszel binary
+/terraform-provider-beszel
+
+# terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# local beszel hub/agent runtime data (from docker-compose.yml)
+/beszel_data/
+/beszel_agent_data/
+/beszel_socket/
+
+.experiments
+
+.claude/settings.local.json
