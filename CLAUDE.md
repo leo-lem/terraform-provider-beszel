@@ -25,24 +25,11 @@ README.md for the full data-model mapping and build order.
 - The provider requires superuser (PocketBase admin) auth. Don't design around regular-user auth
   working for `systems`/`users` CRUD, it doesn't, by Beszel's own collection rules.
 
-## Local Beszel instance
-
-`docker-compose.yml` at repo root runs a hub and agent for manual testing and acceptance tests.
-
-- Superuser: create via `docker compose exec beszel /beszel superuser upsert <email> <password>`.
-- Universal tokens (used by the agent's `TOKEN`/`KEY` env vars) are user-scoped, not
-  superuser-scoped. A superuser calling `/api/beszel/universal-token` gets a 403. Create a regular
-  `users` record (role `admin`) via superuser auth first, then authenticate as that user to fetch the
-  token.
-- Hub's SSH public key (agent's `KEY` env var) comes from `/api/beszel/getkey`, authenticated.
-- `beszel_data/`, `beszel_agent_data/`, `beszel_socket/` are gitignored runtime state, safe to
-  delete and recreate.
-
 ## Testing
 
 - Unit tests (client layer, `httptest`) run with plain `go test ./...`, no live hub needed.
-- Acceptance tests (`TF_ACC=1`) need the real Beszel hub from `docker-compose.yml` running and a
-  superuser already provisioned as above.
+- Acceptance tests (`TF_ACC=1`) need a real Beszel hub with a superuser provisioned. Local setup
+  for this will be documented once acceptance testing is wired up.
 
 ## Reference
 
