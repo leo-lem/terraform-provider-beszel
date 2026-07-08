@@ -65,9 +65,9 @@ Go errors (including a typed "not found" so `Read()` can detect out-of-band dele
 ## Build order
 
 1. Provider skeleton and auth
-2. Client layer for the `systems` collection (current state)
+2. Client layer for the `systems` collection
 3. Core resources and data sources: `beszel_system`, `beszel_user`, `beszel_alert`,
-   `beszel_user_settings`, and the read-only `beszel_system(s)`/`beszel_user` data sources
+   `beszel_user_settings`, and the read-only `beszel_system(s)`/`beszel_user` data sources (current state)
 4. Docs generation and release tooling (goreleaser, signed releases, registry publish)
 5. CI/CD: unit tests on every PR, acceptance tests against a real Beszel hub, automatic release
    to the Terraform Registry on tag push
