@@ -1,6 +1,9 @@
 package client
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // APIError represents the error envelope PocketBase returns on non-2xx responses:
 //
@@ -21,8 +24,9 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("beszel: request failed with status %d: %s", e.Status, e.Message)
 }
 
-// IsNotFound reports whether err represents a 404 response from the Beszel API.
+// IsNotFound reports whether err represents a 404 response from the Beszel API,
+// including when wrapped (e.g. via fmt.Errorf's %w).
 func IsNotFound(err error) bool {
-	apiErr, ok := err.(*APIError)
-	return ok && apiErr.Status == 404
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && apiErr.Status == 404
 }

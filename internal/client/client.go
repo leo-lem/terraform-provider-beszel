@@ -13,7 +13,12 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 )
+
+// defaultTimeout bounds every request so an unreachable or unresponsive hub
+// fails a Terraform apply instead of hanging it indefinitely.
+const defaultTimeout = 30 * time.Second
 
 // Client is an authenticated client for a Beszel hub. It authenticates as a
 // PocketBase superuser, since regular-user auth cannot manage systems/users
@@ -35,7 +40,7 @@ func New(baseURL, email, password string) *Client {
 		baseURL:    strings.TrimRight(baseURL, "/"),
 		email:      email,
 		password:   password,
-		httpClient: http.DefaultClient,
+		httpClient: &http.Client{Timeout: defaultTimeout},
 	}
 }
 

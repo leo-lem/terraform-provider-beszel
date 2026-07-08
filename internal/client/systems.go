@@ -34,10 +34,10 @@ type SystemCreate struct {
 // fields are omitted from the request when nil, so callers can update a
 // subset of fields without clobbering the rest.
 type SystemUpdate struct {
-	Name  *string  `json:"name,omitempty"`
-	Host  *string  `json:"host,omitempty"`
-	Port  *string  `json:"port,omitempty"`
-	Users []string `json:"users,omitempty"`
+	Name  *string   `json:"name,omitempty"`
+	Host  *string   `json:"host,omitempty"`
+	Port  *string   `json:"port,omitempty"`
+	Users *[]string `json:"users,omitempty"`
 }
 
 type systemList struct {
