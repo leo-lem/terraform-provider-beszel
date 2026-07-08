@@ -1,0 +1,40 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+      - run: go vet ./...
+      - name: gofmt
+        run: |
+          diff <(gofmt -l .) <(echo -n)
+      - run: go test ./... -v
+
+  acceptance:
+    runs-on: ubuntu-latest
+    needs: unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Start Beszel hub and provision test data
+        run: ./scripts/testacc-up.sh | sed 's/^export //' | tr -d '"' >> "$GITHUB_ENV"
+      - name: Run acceptance tests
+        run: TF_ACC=1 go test ./... -v -timeout 20m
+      - name: Tear down Beszel hub
+        if: always()
+        run: ./scripts/testacc-down.sh
