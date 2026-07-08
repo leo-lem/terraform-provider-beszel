@@ -58,20 +58,9 @@ Go errors (including a typed "not found" so `Read()` can detect out-of-band dele
 ## Testing strategy
 
 - **Unit tests** for the client layer against `httptest.Server`, no live Beszel needed, run on every PR.
-- **Acceptance tests** (`TF_ACC=1`, `terraform-plugin-testing`) against a real Beszel hub in Docker
-  (see `docker-compose.yml`), full create/read/update/delete/import/drift-detection cycles per resource.
-
-## Local dev environment
-
-`docker-compose.yml` runs a hub and agent pair for manual testing and acceptance tests. First-time setup:
-
-```sh
-docker compose up -d beszel
-docker compose exec beszel /beszel superuser upsert <email> <password>
-```
-
-Then create a matching `users` record and universal token via the API (superusers can't use universal
-tokens directly) before starting the agent. See CLAUDE.md for the exact curl sequence.
+- **Acceptance tests** (`TF_ACC=1`, `terraform-plugin-testing`) against a real Beszel hub, full
+  create/read/update/delete/import/drift-detection cycles per resource. Local setup for this will be
+  documented once acceptance testing is wired up.
 
 ## Build order
 
