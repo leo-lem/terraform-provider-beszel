@@ -30,7 +30,7 @@ Beszel (PocketBase) collections, and how they map:
 | `alerts` | `beszel_alert` resource | Composite natural key (`user`+`system`+`name`), not PocketBase's own `id`. |
 | `user_settings` | `beszel_user_settings` resource | Singleton-per-user, upsert semantics, JSON blob (`emails []string`). |
 | `alerts_history`, `container_stats`, `system_stats`, `system_details`, `containers`, `systemd_services`, `smart_devices`, `quiet_hours`, `fingerprints` | **not modeled** | Agent-populated telemetry/plumbing. Terraform must never fight the agent for ownership of these. |
-| `universal_tokens` | stretch: `beszel_universal_token` | Goes through a stateful custom route, not plain CRUD. Deferred until the core four resources are solid. |
+| `universal_tokens` | not modeled yet | Goes through a stateful custom route, not plain CRUD. Revisit once the core resources are solid. |
 
 The provider authenticates as a Beszel **superuser** (PocketBase admin). Regular-user auth cannot
 create/list `systems` arbitrarily (see `collections.go` rules). This is a real limitation, not an
@@ -64,14 +64,13 @@ Go errors (including a typed "not found" so `Read()` can detect out-of-band dele
 
 ## Build order
 
-1. Provider skeleton and auth (current state)
-2. `beszel_system` resource: proves the CRUD/import/acceptance-test pattern end-to-end
-3. `beszel_system(s)` data sources
-4. `beszel_user` resource
-5. `beszel_alert` resource
-6. `beszel_user_settings` resource
-7. Docs generation and release tooling (goreleaser, signed releases, registry publish)
-8. Stretch: `beszel_universal_token`
+1. Provider skeleton and auth
+2. Client layer for the `systems` collection (current state)
+3. Core resources and data sources: `beszel_system`, `beszel_user`, `beszel_alert`,
+   `beszel_user_settings`, and the read-only `beszel_system(s)`/`beszel_user` data sources
+4. Docs generation and release tooling (goreleaser, signed releases, registry publish)
+5. CI/CD: unit tests on every PR, acceptance tests against a real Beszel hub, automatic release
+   to the Terraform Registry on tag push
 
 ## License
 
