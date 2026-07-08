@@ -118,10 +118,7 @@ func (r *userSettingsResource) Create(ctx context.Context, req resource.CreateRe
 
 	model, diags := userSettingsModelFromAPI(ctx, settings)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
+	setState(ctx, &resp.State, &resp.Diagnostics, model)
 }
 
 func (r *userSettingsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -143,10 +140,7 @@ func (r *userSettingsResource) Read(ctx context.Context, req resource.ReadReques
 
 	model, diags := userSettingsModelFromAPI(ctx, settings)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
+	setState(ctx, &resp.State, &resp.Diagnostics, model)
 }
 
 func (r *userSettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -173,10 +167,7 @@ func (r *userSettingsResource) Update(ctx context.Context, req resource.UpdateRe
 
 	model, diags := userSettingsModelFromAPI(ctx, settings)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
+	setState(ctx, &resp.State, &resp.Diagnostics, model)
 }
 
 func (r *userSettingsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

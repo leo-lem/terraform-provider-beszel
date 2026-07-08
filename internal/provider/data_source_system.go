@@ -113,9 +113,5 @@ func (d *systemDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	model := systemModelFromAPI(ctx, system, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
+	setState(ctx, &resp.State, &resp.Diagnostics, systemModelFromAPI(ctx, system, &resp.Diagnostics))
 }

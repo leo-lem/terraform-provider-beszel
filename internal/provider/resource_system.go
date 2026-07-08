@@ -111,11 +111,7 @@ func (r *systemResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	model := systemModelFromAPI(ctx, system, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
+	setState(ctx, &resp.State, &resp.Diagnostics, systemModelFromAPI(ctx, system, &resp.Diagnostics))
 }
 
 func (r *systemResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -135,11 +131,7 @@ func (r *systemResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	model := systemModelFromAPI(ctx, system, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
+	setState(ctx, &resp.State, &resp.Diagnostics, systemModelFromAPI(ctx, system, &resp.Diagnostics))
 }
 
 func (r *systemResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -170,11 +162,7 @@ func (r *systemResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	model := systemModelFromAPI(ctx, system, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
+	setState(ctx, &resp.State, &resp.Diagnostics, systemModelFromAPI(ctx, system, &resp.Diagnostics))
 }
 
 func (r *systemResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
