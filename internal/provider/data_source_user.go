@@ -86,6 +86,14 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
+	if config.ID.IsUnknown() || config.Email.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Unknown value",
+			"id and email must be known values; they cannot depend on an attribute that isn't known until apply.",
+		)
+		return
+	}
+
 	hasID := !config.ID.IsNull() && config.ID.ValueString() != ""
 	hasEmail := !config.Email.IsNull() && config.Email.ValueString() != ""
 	if hasID == hasEmail {

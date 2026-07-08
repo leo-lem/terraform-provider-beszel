@@ -203,19 +203,3 @@ func alertModelFromAPI(alert *client.Alert) alertResourceModel {
 	}
 	return model
 }
-
-func float64PtrOrNil(v types.Float64) *float64 {
-	if v.IsNull() || v.IsUnknown() {
-		return nil
-	}
-	value := v.ValueFloat64()
-	return &value
-}
-
-func int64PtrOrNil(v types.Int64) *int {
-	if v.IsNull() || v.IsUnknown() {
-		return nil
-	}
-	value := int(v.ValueInt64())
-	return &value
-}

@@ -107,14 +107,24 @@ func (r *userSettingsResource) Create(ctx context.Context, req resource.CreateRe
 		Settings: client.UserSettingsData{Emails: emails},
 	}
 
-	var settings *client.UserSettings
+	settingsID := ""
 	if existing != nil {
-		settings, err = r.client.UpdateUserSettings(ctx, existing.ID, write)
+		settingsID = existing.ID
 	} else {
-		settings, err = r.client.CreateUserSettings(ctx, write)
+		created, err := r.client.CreateUserSettings(ctx, write)
+		if err != nil {
+			resp.Diagnostics.AddError("Error creating user_settings", err.Error())
+			return
+		}
+		settingsID = created.ID
 	}
+
+	// Beszel resets settings to server-side defaults on create regardless of
+	// what was posted, so the desired values always have to be applied via a
+	// follow-up update, whether or not a record already existed.
+	settings, err := r.client.UpdateUserSettings(ctx, settingsID, write)
 	if err != nil {
-		resp.Diagnostics.AddError("Error creating user_settings", err.Error())
+		resp.Diagnostics.AddError("Error setting user_settings", err.Error())
 		return
 	}
 

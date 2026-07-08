@@ -63,6 +63,9 @@ func (r *systemResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Optional:    true,
 				Computed:    true,
 				Description: "Agent port. Left unset, Beszel assigns/reports one.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"users": schema.ListAttribute{
 				Required:    true,
@@ -168,12 +171,11 @@ func (r *systemResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	name := plan.Name.ValueString()
 	host := plan.Host.ValueString()
-	port := plan.Port.ValueString()
 
 	system, err := r.client.UpdateSystem(ctx, state.ID.ValueString(), client.SystemUpdate{
 		Name:  &name,
 		Host:  &host,
-		Port:  &port,
+		Port:  stringPtrOrNil(plan.Port),
 		Users: &users,
 	})
 	if err != nil {

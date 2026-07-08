@@ -98,6 +98,14 @@ func (d *systemDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
+	if config.ID.IsUnknown() || config.Name.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Unknown value",
+			"id and name must be known values; they cannot depend on an attribute that isn't known until apply.",
+		)
+		return
+	}
+
 	hasID := !config.ID.IsNull() && config.ID.ValueString() != ""
 	hasName := !config.Name.IsNull() && config.Name.ValueString() != ""
 	if hasID == hasName {

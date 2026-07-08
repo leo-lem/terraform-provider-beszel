@@ -28,8 +28,23 @@ README.md for the full data-model mapping and build order.
 ## Testing
 
 - Unit tests (client layer, `httptest`) run with plain `go test ./...`, no live hub needed.
-- Acceptance tests (`TF_ACC=1`) need a real Beszel hub with a superuser provisioned. Local setup
-  for this will be documented once acceptance testing is wired up.
+- Acceptance tests (`TF_ACC=1`) need a real Beszel hub. `docker-compose.yml` at repo root runs just
+  the hub (no agent: acceptance tests only exercise the REST API, not agent-reported telemetry).
+  `scripts/testacc-up.sh` starts it, provisions a superuser and a regular test user, and prints the
+  env vars the tests read (`BESZEL_ENDPOINT`, `BESZEL_EMAIL`, `BESZEL_PASSWORD`,
+  `BESZEL_TEST_USER_ID`):
+
+  ```sh
+  eval "$(./scripts/testacc-up.sh)"
+  TF_ACC=1 go test ./... -v
+  ./scripts/testacc-down.sh
+  ```
+
+  This is the same setup CI will use to run acceptance tests.
+- Known Beszel quirk found via acceptance testing: creating a `user_settings` record resets
+  `settings` to server-side defaults regardless of what was posted; only a follow-up `PATCH`
+  actually persists the desired value. `resource_user_settings.go`'s `Create` always does a
+  create-or-find followed by an update because of this.
 
 ## Reference
 

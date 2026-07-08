@@ -78,6 +78,14 @@ func (d *systemsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
+	if config.Filter.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"Unknown value",
+			"filter must be a known value; it cannot depend on an attribute that isn't known until apply.",
+		)
+		return
+	}
+
 	systems, err := d.client.ListSystems(ctx, config.Filter.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Error listing systems", err.Error())
