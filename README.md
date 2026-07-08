@@ -59,15 +59,23 @@ Go errors (including a typed "not found" so `Read()` can detect out-of-band dele
 
 - **Unit tests** for the client layer against `httptest.Server`, no live Beszel needed, run on every PR.
 - **Acceptance tests** (`TF_ACC=1`, `terraform-plugin-testing`) against a real Beszel hub, full
-  create/read/update/delete/import/drift-detection cycles per resource. Local setup for this will be
-  documented once acceptance testing is wired up.
+  create/read/update/delete/import cycles per resource. `docker-compose.yml` runs the hub;
+  `scripts/testacc-up.sh` provisions it and prints the env vars the tests need:
+
+  ```sh
+  eval "$(./scripts/testacc-up.sh)"
+  TF_ACC=1 go test ./... -v
+  ./scripts/testacc-down.sh
+  ```
+
+  The same compose file and scripts are what CI will use to run acceptance tests.
 
 ## Build order
 
 1. Provider skeleton and auth
-2. Client layer for the `systems` collection (current state)
+2. Client layer for the `systems` collection
 3. Core resources and data sources: `beszel_system`, `beszel_user`, `beszel_alert`,
-   `beszel_user_settings`, and the read-only `beszel_system(s)`/`beszel_user` data sources
+   `beszel_user_settings`, and the read-only `beszel_system(s)`/`beszel_user` data sources (current state)
 4. Docs generation and release tooling (goreleaser, signed releases, registry publish)
 5. CI/CD: unit tests on every PR, acceptance tests against a real Beszel hub, automatic release
    to the Terraform Registry on tag push
