@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/leo-lem/terraform-provider-beszel/internal/client"
@@ -21,16 +20,9 @@ type systemDataSource struct {
 	client *client.Client
 }
 
-type systemDataSourceModel struct {
-	ID    types.String `tfsdk:"id"`
-	Name  types.String `tfsdk:"name"`
-	Host  types.String `tfsdk:"host"`
-	Port  types.String `tfsdk:"port"`
-	Users types.List   `tfsdk:"users"`
-
-	Status types.String `tfsdk:"status"`
-	Info   types.String `tfsdk:"info"`
-}
+// systemDataSourceModel shares its shape with systemResourceModel (same
+// tfsdk tags), so systemModelFromAPI in resource_system.go is reused here too.
+type systemDataSourceModel = systemResourceModel
 
 func (d *systemDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_system"
@@ -76,19 +68,7 @@ func (d *systemDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 }
 
 func (d *systemDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	c, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected data source configure type",
-			fmt.Sprintf("Expected *client.Client, got %T. This is a provider bug.", req.ProviderData),
-		)
-		return
-	}
-	d.client = c
+	d.client = configureClient(req.ProviderData, &resp.Diagnostics)
 }
 
 func (d *systemDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -133,24 +113,9 @@ func (d *systemDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	model := systemDataSourceModelFromAPI(ctx, system, &resp.Diagnostics)
+	model := systemModelFromAPI(ctx, system, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, model)...)
-}
-
-func systemDataSourceModelFromAPI(ctx context.Context, system *client.System, diags *diag.Diagnostics) systemDataSourceModel {
-	users, d := types.ListValueFrom(ctx, types.StringType, system.Users)
-	diags.Append(d...)
-
-	return systemDataSourceModel{
-		ID:     types.StringValue(system.ID),
-		Name:   types.StringValue(system.Name),
-		Host:   types.StringValue(system.Host),
-		Port:   types.StringValue(system.Port),
-		Users:  users,
-		Status: types.StringValue(system.Status),
-		Info:   types.StringValue(string(system.Info)),
-	}
 }

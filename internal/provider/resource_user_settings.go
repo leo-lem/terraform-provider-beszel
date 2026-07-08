@@ -66,19 +66,7 @@ func (r *userSettingsResource) Schema(_ context.Context, _ resource.SchemaReques
 }
 
 func (r *userSettingsResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	c, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected resource configure type",
-			fmt.Sprintf("Expected *client.Client, got %T. This is a provider bug.", req.ProviderData),
-		)
-		return
-	}
-	r.client = c
+	r.client = configureClient(req.ProviderData, &resp.Diagnostics)
 }
 
 func (r *userSettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

@@ -1,6 +1,33 @@
 package provider
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
+import (
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/leo-lem/terraform-provider-beszel/internal/client"
+)
+
+// configureClient extracts the *client.Client passed down from the provider's
+// Configure method, shared by every resource/data source Configure method.
+// providerData is nil on the first call the framework makes before the
+// provider itself has been configured, which is not an error.
+func configureClient(providerData any, diags *diag.Diagnostics) *client.Client {
+	if providerData == nil {
+		return nil
+	}
+
+	c, ok := providerData.(*client.Client)
+	if !ok {
+		diags.AddError(
+			"Unexpected configure type",
+			fmt.Sprintf("Expected *client.Client, got %T. This is a provider bug.", providerData),
+		)
+		return nil
+	}
+	return c
+}
 
 // The following helpers convert Terraform Framework values to Go pointers,
 // treating both null and unknown as "don't send this field" so partial

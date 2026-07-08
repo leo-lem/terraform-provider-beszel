@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -92,19 +91,7 @@ func (r *alertResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 }
 
 func (r *alertResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	c, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected resource configure type",
-			fmt.Sprintf("Expected *client.Client, got %T. This is a provider bug.", req.ProviderData),
-		)
-		return
-	}
-	r.client = c
+	r.client = configureClient(req.ProviderData, &resp.Diagnostics)
 }
 
 func (r *alertResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

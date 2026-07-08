@@ -8,6 +8,49 @@ import (
 	"github.com/leo-lem/terraform-provider-beszel/internal/client"
 )
 
+func TestListUsers(t *testing.T) {
+	c, _ := newTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/collections/_superusers/auth-with-password":
+			authHandler(w, r)
+		case "/api/collections/users/records":
+			if r.URL.Query().Get("filter") != `email = "a@example.com"` {
+				t.Fatalf("unexpected filter: %q", r.URL.Query().Get("filter"))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"items": []client.User{{ID: "userid1234567", Email: "a@example.com"}}})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	got, err := c.ListUsers(t.Context(), `email = "a@example.com"`)
+	if err != nil {
+		t.Fatalf("ListUsers: %v", err)
+	}
+	if len(got) != 1 || got[0].Email != "a@example.com" {
+		t.Fatalf("unexpected result: %+v", got)
+	}
+}
+
+func TestGetUserNotFound(t *testing.T) {
+	c, _ := newTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/collections/_superusers/auth-with-password":
+			authHandler(w, r)
+		case "/api/collections/users/records/missing":
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(map[string]any{"code": 404, "message": "not found"})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	_, err := c.GetUser(t.Context(), "missing")
+	if !client.IsNotFound(err) {
+		t.Fatalf("expected IsNotFound(err) to be true, got %v", err)
+	}
+}
+
 func TestCreateUser(t *testing.T) {
 	in := client.UserCreate{Email: "a@example.com", Password: "supersecret1", PasswordConfirm: "supersecret1", Role: "admin", Verified: true}
 

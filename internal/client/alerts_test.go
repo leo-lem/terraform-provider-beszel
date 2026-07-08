@@ -8,6 +8,49 @@ import (
 	"github.com/leo-lem/terraform-provider-beszel/internal/client"
 )
 
+func TestListAlerts(t *testing.T) {
+	c, _ := newTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/collections/_superusers/auth-with-password":
+			authHandler(w, r)
+		case "/api/collections/alerts/records":
+			if r.URL.Query().Get("filter") != `system = "sys123"` {
+				t.Fatalf("unexpected filter: %q", r.URL.Query().Get("filter"))
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"items": []client.Alert{{ID: "alertid123456", System: "sys123", Name: "CPU"}}})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	got, err := c.ListAlerts(t.Context(), `system = "sys123"`)
+	if err != nil {
+		t.Fatalf("ListAlerts: %v", err)
+	}
+	if len(got) != 1 || got[0].Name != "CPU" {
+		t.Fatalf("unexpected result: %+v", got)
+	}
+}
+
+func TestGetAlertNotFound(t *testing.T) {
+	c, _ := newTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/collections/_superusers/auth-with-password":
+			authHandler(w, r)
+		case "/api/collections/alerts/records/missing":
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(map[string]any{"code": 404, "message": "not found"})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	_, err := c.GetAlert(t.Context(), "missing")
+	if !client.IsNotFound(err) {
+		t.Fatalf("expected IsNotFound(err) to be true, got %v", err)
+	}
+}
+
 func TestCreateAlert(t *testing.T) {
 	min := 5
 	in := client.AlertCreate{User: "user123", System: "sys123", Name: "CPU", Min: &min}
