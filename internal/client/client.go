@@ -70,7 +70,7 @@ func (c *Client) authenticate(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("beszel: authentication request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -111,9 +111,10 @@ func (c *Client) invalidateToken() {
 	c.token = ""
 }
 
-// do issues an authenticated request. If body is non-nil, it is marshaled as
-// JSON. If out is non-nil, the response body is unmarshaled into it. A single
-// 401 triggers one re-authentication and retry, since PocketBase tokens expire.
+// do issues an authenticated request using the client's own superuser token.
+// If body is non-nil, it is marshaled as JSON. If out is non-nil, the response
+// body is unmarshaled into it. A single 401 triggers one re-authentication and
+// retry, since PocketBase tokens expire.
 func (c *Client) do(ctx context.Context, method, path string, query url.Values, body, out any) error {
 	var bodyReader io.Reader
 	if body != nil {
@@ -124,7 +125,12 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 		bodyReader = bytes.NewReader(encoded)
 	}
 
-	resp, respBody, err := c.doOnce(ctx, method, path, query, bodyReader)
+	token, err := c.currentToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	resp, respBody, err := c.doOnce(ctx, token, method, path, query, bodyReader)
 	if err != nil {
 		return err
 	}
@@ -138,12 +144,42 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 			}
 			bodyReader = bytes.NewReader(encoded)
 		}
-		resp, respBody, err = c.doOnce(ctx, method, path, query, bodyReader)
+		token, err = c.currentToken(ctx)
+		if err != nil {
+			return err
+		}
+		resp, respBody, err = c.doOnce(ctx, token, method, path, query, bodyReader)
 		if err != nil {
 			return err
 		}
 	}
 
+	return decodeResponse(method, path, resp, respBody, out)
+}
+
+// doAs issues a single authenticated request using the given token directly,
+// bypassing the client's cached superuser token and 401 retry. Used for
+// endpoints that must be called as an impersonated regular user rather than
+// the superuser (see ImpersonateUser).
+func (c *Client) doAs(ctx context.Context, token, method, path string, query url.Values, body, out any) error {
+	var bodyReader io.Reader
+	if body != nil {
+		encoded, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		bodyReader = bytes.NewReader(encoded)
+	}
+
+	resp, respBody, err := c.doOnce(ctx, token, method, path, query, bodyReader)
+	if err != nil {
+		return err
+	}
+
+	return decodeResponse(method, path, resp, respBody, out)
+}
+
+func decodeResponse(method, path string, resp *http.Response, respBody []byte, out any) error {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return decodeAPIError(resp.StatusCode, respBody)
 	}
@@ -157,12 +193,7 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 	return nil
 }
 
-func (c *Client) doOnce(ctx context.Context, method, path string, query url.Values, body io.Reader) (*http.Response, []byte, error) {
-	token, err := c.currentToken(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
+func (c *Client) doOnce(ctx context.Context, token, method, path string, query url.Values, body io.Reader) (*http.Response, []byte, error) {
 	fullURL := c.baseURL + path
 	if len(query) > 0 {
 		fullURL += "?" + query.Encode()
@@ -181,7 +212,7 @@ func (c *Client) doOnce(ctx context.Context, method, path string, query url.Valu
 	if err != nil {
 		return nil, nil, fmt.Errorf("beszel: request to %s %s failed: %w", method, path, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -189,6 +220,28 @@ func (c *Client) doOnce(ctx context.Context, method, path string, query url.Valu
 	}
 
 	return resp, respBody, nil
+}
+
+type impersonateResponse struct {
+	Token string `json:"token"`
+}
+
+// ImpersonateUser obtains an auth token for the given user record via
+// PocketBase's superuser impersonation route. Some Beszel endpoints (e.g. the
+// universal token endpoint) are scoped to the caller's own record and
+// explicitly forbid superuser callers, so the client has to act as the user
+// itself for those.
+func (c *Client) ImpersonateUser(ctx context.Context, userID string, duration time.Duration) (string, error) {
+	var resp impersonateResponse
+	path := fmt.Sprintf("/api/collections/users/impersonate/%s", userID)
+	body := map[string]any{}
+	if duration > 0 {
+		body["duration"] = int(duration.Seconds())
+	}
+	if err := c.do(ctx, http.MethodPost, path, nil, body, &resp); err != nil {
+		return "", fmt.Errorf("beszel: impersonating user %s: %w", userID, err)
+	}
+	return resp.Token, nil
 }
 
 func decodeAPIError(status int, body []byte) error {

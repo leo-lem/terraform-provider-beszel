@@ -103,6 +103,7 @@ func (p *BeszelProvider) Resources(_ context.Context) []func() resource.Resource
 		NewUserResource,
 		NewAlertResource,
 		NewUserSettingsResource,
+		NewUniversalTokenResource,
 	}
 }
 
