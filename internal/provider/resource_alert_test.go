@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccAlertResource(t *testing.T) {
@@ -26,6 +27,19 @@ func TestAccAlertResource(t *testing.T) {
 			{
 				ResourceName:      "beszel_alert.test",
 				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				ResourceName: "beszel_alert.test",
+				ImportState:  true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					rs, ok := s.RootModule().Resources["beszel_alert.test"]
+					if !ok {
+						return "", fmt.Errorf("beszel_alert.test not found in state")
+					}
+					attrs := rs.Primary.Attributes
+					return fmt.Sprintf("%s/%s/%s", attrs["user"], attrs["system"], attrs["name"]), nil
+				},
 				ImportStateVerify: true,
 			},
 			{

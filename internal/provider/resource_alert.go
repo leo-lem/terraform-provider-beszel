@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -43,7 +45,8 @@ func (r *alertResource) Metadata(_ context.Context, req resource.MetadataRequest
 
 func (r *alertResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages an alert threshold for a system, on behalf of a user.",
+		Description: "Manages an alert threshold for a system, on behalf of a user. Importable by " +
+			"either the PocketBase record id, or user/system/name (Beszel's own unique index on this collection).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
@@ -168,8 +171,49 @@ func (r *alertResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	}
 }
 
+// ImportState accepts either the PocketBase record id, or the natural key
+// user/system/name (Beszel's own unique index on the alerts collection), for
+// import IDs that better match what's actually visible to a user browsing
+// alerts in the hub UI, which shows alerts by owner/system/kind, not by
+// internal id.
 func (r *alertResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	if !strings.Contains(req.ID, "/") {
+		resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+		return
+	}
+
+	parts := strings.Split(req.ID, "/")
+	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+		resp.Diagnostics.AddError(
+			"Invalid import ID",
+			fmt.Sprintf("Expected either a PocketBase record id, or user/system/name, got: %q", req.ID),
+		)
+		return
+	}
+
+	userID, systemID, name := parts[0], parts[1], parts[2]
+	filter := fmt.Sprintf("user = %q && system = %q && name = %q", userID, systemID, name)
+	alerts, err := r.client.ListAlerts(ctx, filter)
+	if err != nil {
+		resp.Diagnostics.AddError("Error looking up alert for import", err.Error())
+		return
+	}
+	switch len(alerts) {
+	case 1:
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), alerts[0].ID)...)
+	case 0:
+		resp.Diagnostics.AddError(
+			"Alert not found",
+			fmt.Sprintf("No alert found for user=%s, system=%s, name=%s", userID, systemID, name),
+		)
+	default:
+		resp.Diagnostics.AddError(
+			"Multiple alerts found",
+			fmt.Sprintf("Expected exactly one alert for user=%s, system=%s, name=%s, found %d. "+
+				"This shouldn't happen given Beszel's unique index on (user, system, name); "+
+				"import by the PocketBase record id instead.", userID, systemID, name, len(alerts)),
+		)
+	}
 }
 
 func alertModelFromAPI(alert *client.Alert) alertResourceModel {

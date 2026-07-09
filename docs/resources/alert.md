@@ -3,12 +3,12 @@
 page_title: "beszel_alert Resource - beszel"
 subcategory: ""
 description: |-
-  Manages an alert threshold for a system, on behalf of a user.
+  Manages an alert threshold for a system, on behalf of a user. Importable by either the PocketBase record id, or user/system/name (Beszel's own unique index on this collection).
 ---
 
 # beszel_alert (Resource)
 
-Manages an alert threshold for a system, on behalf of a user.
+Manages an alert threshold for a system, on behalf of a user. Importable by either the PocketBase record id, or user/system/name (Beszel's own unique index on this collection).
 
 ## Example Usage
 
@@ -40,3 +40,18 @@ resource "beszel_alert" "example" {
 
 - `id` (String) PocketBase record ID of the alert.
 - `triggered` (Boolean) Whether the alert is currently in a triggered state.
+
+## Import
+
+Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
+```shell
+# By PocketBase record id:
+terraform import beszel_alert.example i4bzj802ik4qynl
+
+# Or by the natural key Beszel enforces a unique index on (user/system/name),
+# which is easier to find from the hub UI than the internal record id:
+terraform import beszel_alert.example lo3vm112x037lr9/mgkg479e40815tj/CPU
+```
