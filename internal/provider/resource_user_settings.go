@@ -107,9 +107,10 @@ func (r *userSettingsResource) Create(ctx context.Context, req resource.CreateRe
 		settingsID = created.ID
 	}
 
-	// Beszel resets settings to server-side defaults on create regardless of
-	// what was posted, so the desired values always have to be applied via a
-	// follow-up update, whether or not a record already existed.
+	// Beszel's OnRecordCreate("user_settings") hook always forces settings.emails
+	// to the owning user's own address on create, discarding whatever was
+	// posted for that field, so the desired emails always have to be applied
+	// via a follow-up update, whether or not a record already existed.
 	settings, err := r.client.UpdateUserSettings(ctx, settingsID, write)
 	if err != nil {
 		resp.Diagnostics.AddError("Error setting user_settings", err.Error())
