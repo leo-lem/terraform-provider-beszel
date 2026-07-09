@@ -9,8 +9,6 @@ README.md for the full data-model mapping and build order.
 - Never use emojis.
 - Never use double dashes (--) or em dashes (—) anywhere in code, comments, commit messages, or
   docs. Use a period, comma, colon, or parentheses instead.
-- Do not describe this project as a portfolio project, learning exercise, or similar, anywhere
-  (README, docs, comments, commit messages).
 
 ## Conventions
 
@@ -52,9 +50,8 @@ README.md for the full data-model mapping and build order.
   `Description` fields and `.tf` files from `examples/`). Never hand-edit files under `docs/`;
   change the source `Description` or example instead and regenerate.
 - `.goreleaser.yml` and `.github/workflows/release.yml` are wired up but the provider has not been
-  published to the Terraform Registry yet (repo is still private, no signing key registered). See
-  README.md's "Release process" section for the exact one-time steps and their order. Don't assume
-  a tag push will actually publish anything until that's done.
+  published to the Terraform Registry yet. See RELEASE_CHECKLIST.md for the exact one-time steps and
+  their order. Don't assume a tag push will actually publish anything until that's done.
 
 ## Reference
 
