@@ -39,10 +39,11 @@ README.md for the full data-model mapping and build order.
   ```
 
   This is the same setup `.github/workflows/test.yml` uses to run acceptance tests in CI.
-- Known Beszel quirk found via acceptance testing: creating a `user_settings` record resets
-  `settings` to server-side defaults regardless of what was posted; only a follow-up `PATCH`
-  actually persists the desired value. `resource_user_settings.go`'s `Create` always does a
-  create-or-find followed by an update because of this.
+- Known Beszel behavior found via acceptance testing (deliberate, per its `OnRecordCreate("user_settings")`
+  hook, not a bug): creating a `user_settings` record always forces `settings.emails` to the
+  owning user's own address, discarding whatever was posted for that field; other `settings`
+  fields pass through as posted. `resource_user_settings.go`'s `Create` always does a
+  create-or-find followed by an update to still land the desired `emails` value.
 
 ## Documentation and release
 
