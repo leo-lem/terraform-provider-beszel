@@ -93,8 +93,9 @@ combinations, produces a checksums file, GPG-signs it, and attaches
 `terraform-registry-manifest.json` to the GitHub Release. `.github/workflows/release.yml` runs this
 automatically on any `v*` tag push.
 
-This repo has everything prepared for that (manifest, GoReleaser config, release workflow). See
-[RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for the one-time setup steps still pending.
+Publish a new version by pushing a `v*` tag (e.g. `v0.1.0`); `release.yml` picks it up and
+GoReleaser builds, signs, and publishes the release, which the Terraform Registry then ingests
+automatically.
 
 ## License
 
