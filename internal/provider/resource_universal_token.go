@@ -54,6 +54,7 @@ func (r *universalTokenResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"token": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
+				Sensitive:   true,
 				Description: "Token value. Left unset, Beszel generates one.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),

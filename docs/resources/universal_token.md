@@ -29,7 +29,7 @@ resource "beszel_universal_token" "example" {
 ### Optional
 
 - `permanent` (Boolean) Whether the token persists across hub restarts. If false, it expires after an hour of hub uptime.
-- `token` (String) Token value. Left unset, Beszel generates one.
+- `token` (String, Sensitive) Token value. Left unset, Beszel generates one.
 
 ### Read-Only
 
