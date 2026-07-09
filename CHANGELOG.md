@@ -4,6 +4,14 @@ All notable changes to this provider are documented here. Versions follow
 [Semantic Versioning](https://semver.org/); this format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- `beszel_alert` can now be imported by its natural key (`user/system/name`, Beszel's own unique
+  index on the alerts collection) as well as its PocketBase record id, matching what's actually
+  visible from the hub UI.
+
 ## v0.2.0 (2026-07-09)
 
 ### Added
