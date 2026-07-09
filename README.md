@@ -29,8 +29,8 @@ Beszel (PocketBase) collections, and how they map:
 | `users` | `beszel_user` resource + data source | Auth-collection quirks: write-only password, no read-back. |
 | `alerts` | `beszel_alert` resource | Composite natural key (`user`+`system`+`name`), not PocketBase's own `id`. |
 | `user_settings` | `beszel_user_settings` resource | Singleton-per-user, upsert semantics, JSON blob (`emails []string`). |
+| `universal_tokens` | `beszel_universal_token` resource | Custom route, not plain CRUD, and scoped to the caller's own record: superusers are forbidden from calling it, so the client impersonates the target user first. |
 | `alerts_history`, `container_stats`, `system_stats`, `system_details`, `containers`, `systemd_services`, `smart_devices`, `quiet_hours`, `fingerprints` | **not modeled** | Agent-populated telemetry/plumbing. Terraform must never fight the agent for ownership of these. |
-| `universal_tokens` | not modeled yet | Goes through a stateful custom route, not plain CRUD. Revisit once the core resources are solid. |
 
 The provider authenticates as a Beszel **superuser** (PocketBase admin). Regular-user auth cannot
 create/list `systems` arbitrarily (see `collections.go` rules). This is a real limitation, not an
@@ -95,7 +95,7 @@ automatically on any `v*` tag push.
 
 Publish a new version by pushing a `v*` tag (e.g. `v0.1.0`); `release.yml` picks it up and
 GoReleaser builds, signs, and publishes the release, which the Terraform Registry then ingests
-automatically.
+automatically. See [CHANGELOG.md](CHANGELOG.md) for what changed in each release.
 
 ## License
 

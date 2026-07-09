@@ -18,9 +18,7 @@ jobs:
           go-version-file: go.mod
       - run: go build ./...
       - run: go vet ./...
-      - name: gofmt
-        run: |
-          diff <(gofmt -l .) <(echo -n)
+      - run: make lint
       - run: go test ./... -v
 
   acceptance:

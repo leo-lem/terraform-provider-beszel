@@ -1,0 +1,28 @@
+---
+page_title: "Getting Started"
+---
+
+# Getting started
+
+A complete flow against a Beszel hub: create a user, a system that user owns, an alert on it,
+notification settings, and a permanent agent registration token, then look the system back up
+through both data sources.
+
+Beszel itself has to already be running and reachable, and you need its superuser credentials;
+this provider manages resources inside a hub, it does not stand one up.
+
+{{ tffile "examples/guides/getting-started/main.tf" }}
+
+Apply this with:
+
+```shell
+terraform init
+terraform apply \
+  -var="beszel_endpoint=https://beszel.example.com" \
+  -var="beszel_email=admin@example.com" \
+  -var="beszel_password=..." \
+  -var="owner_password=..."
+```
+
+The system stays in `pending` status until an agent actually registers and reports in; point a
+Beszel agent at this hub using `beszel_universal_token.owner.token` to see it move to `up`.
