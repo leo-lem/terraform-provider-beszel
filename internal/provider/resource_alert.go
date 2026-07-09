@@ -177,9 +177,17 @@ func (r *alertResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 // alerts in the hub UI, which shows alerts by owner/system/kind, not by
 // internal id.
 func (r *alertResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	parts := strings.Split(req.ID, "/")
-	if len(parts) != 3 {
+	if !strings.Contains(req.ID, "/") {
 		resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+		return
+	}
+
+	parts := strings.Split(req.ID, "/")
+	if len(parts) != 3 || parts[0] == "" || parts[1] == "" || parts[2] == "" {
+		resp.Diagnostics.AddError(
+			"Invalid import ID",
+			fmt.Sprintf("Expected either a PocketBase record id, or user/system/name, got: %q", req.ID),
+		)
 		return
 	}
 
@@ -190,15 +198,22 @@ func (r *alertResource) ImportState(ctx context.Context, req resource.ImportStat
 		resp.Diagnostics.AddError("Error looking up alert for import", err.Error())
 		return
 	}
-	if len(alerts) != 1 {
+	switch len(alerts) {
+	case 1:
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), alerts[0].ID)...)
+	case 0:
 		resp.Diagnostics.AddError(
 			"Alert not found",
 			fmt.Sprintf("No alert found for user=%s, system=%s, name=%s", userID, systemID, name),
 		)
-		return
+	default:
+		resp.Diagnostics.AddError(
+			"Multiple alerts found",
+			fmt.Sprintf("Expected exactly one alert for user=%s, system=%s, name=%s, found %d. "+
+				"This shouldn't happen given Beszel's unique index on (user, system, name); "+
+				"import by the PocketBase record id instead.", userID, systemID, name, len(alerts)),
+		)
 	}
-
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), alerts[0].ID)...)
 }
 
 func alertModelFromAPI(alert *client.Alert) alertResourceModel {
