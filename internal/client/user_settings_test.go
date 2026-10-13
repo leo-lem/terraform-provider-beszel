@@ -133,3 +133,47 @@ func TestDeleteUserSettings(t *testing.T) {
 		t.Fatal("expected DELETE request to be sent")
 	}
 }
+
+func TestUserSettingsDataPreservesUnknownKeys(t *testing.T) {
+	var data client.UserSettingsData
+	in := `{"emails":["a@example.com"],"webhooks":["generic://x"],"lang":"en","unitTemp":{"v":1}}`
+	if err := json.Unmarshal([]byte(in), &data); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(data.Webhooks) != 1 || data.Webhooks[0] != "generic://x" {
+		t.Fatalf("unexpected webhooks: %+v", data.Webhooks)
+	}
+
+	data.Webhooks = []string{"generic://y"}
+	out, err := json.Marshal(data)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(out, &got); err != nil {
+		t.Fatalf("decoding output: %v", err)
+	}
+	if got["lang"] != "en" || got["unitTemp"] == nil {
+		t.Fatalf("unknown keys were dropped: %s", out)
+	}
+	if hooks, _ := got["webhooks"].([]any); len(hooks) != 1 || hooks[0] != "generic://y" {
+		t.Fatalf("unexpected webhooks in output: %s", out)
+	}
+}
+
+func TestUserSettingsDataNilSlicesMarshalAsEmpty(t *testing.T) {
+	out, err := json.Marshal(client.UserSettingsData{})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var got map[string]any
+	if err := json.Unmarshal(out, &got); err != nil {
+		t.Fatalf("decoding output: %v", err)
+	}
+	if e, ok := got["emails"].([]any); !ok || len(e) != 0 {
+		t.Fatalf("emails should be []: %s", out)
+	}
+	if w, ok := got["webhooks"].([]any); !ok || len(w) != 0 {
+		t.Fatalf("webhooks should be []: %s", out)
+	}
+}

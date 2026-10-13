@@ -41,6 +41,9 @@ resource "beszel_user" "owner" {
 resource "beszel_user_settings" "owner" {
   user   = beszel_user.owner.id
   emails = ["owner@example.com"]
+
+  # Webhook / push notifications, as Shoutrrr URLs (https://containrrr.dev/shoutrrr/).
+  webhooks = ["generic://example.com/beszel-hook"]
 }
 
 # A monitored system owned by beszel_user.owner. Until an agent registers
@@ -59,6 +62,14 @@ resource "beszel_alert" "web_cpu" {
   name   = "CPU"
   value  = 90
   min    = 10
+}
+
+# Mute the owner's notifications every night, 22:00 to 06:00 UTC.
+resource "beszel_quiet_hours" "owner_nightly" {
+  user  = beszel_user.owner.id
+  type  = "daily"
+  start = "2026-01-01T22:00:00Z"
+  end   = "2026-01-02T06:00:00Z"
 }
 
 # A permanent token owner's agents can use to register with this hub.

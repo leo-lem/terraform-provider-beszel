@@ -18,7 +18,7 @@ README.md for the full data-model mapping and build order.
 - Resources never call HTTP directly. Always through `internal/client/`, one file per PocketBase
   collection, typed methods only (no raw `map[string]interface{}` leaking into provider code).
 - Collections that are agent-populated telemetry (`system_stats`, `container_stats`, `system_details`,
-  `containers`, `systemd_services`, `smart_devices`, `quiet_hours`, `alerts_history`, `fingerprints`)
+  `containers`, `systemd_services`, `smart_devices`, `alerts_history`, `fingerprints`)
   are intentionally not modeled as resources. Don't add them without discussing scope first.
 - The provider requires superuser (PocketBase admin) auth. Don't design around regular-user auth
   working for `systems`/`users` CRUD, it doesn't, by Beszel's own collection rules.
@@ -44,6 +44,10 @@ README.md for the full data-model mapping and build order.
   owning user's own address, discarding whatever was posted for that field; other `settings`
   fields pass through as posted. `resource_user_settings.go`'s `Create` always does a
   create-or-find followed by an update to still land the desired `emails` value.
+- Beszel replaces the whole `user_settings.settings` blob on write, and the web UI keeps many
+  other preferences in it. The client's `UserSettingsData` therefore preserves unknown keys, and
+  the resource always reads the current record before writing.
+- Beszel cascade-deletes a system's `quiet_hours` windows when the system is deleted.
 
 ## Documentation and release
 
