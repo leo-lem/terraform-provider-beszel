@@ -4,6 +4,24 @@ All notable changes to this provider are documented here. Versions follow
 [Semantic Versioning](https://semver.org/); this format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## Unreleased
+
+### Added
+
+- `webhooks` on `beszel_user_settings`: webhook / push notification URLs (Shoutrrr format),
+  matching the "Webhook / Push notifications" setting in the Beszel UI. Marked sensitive.
+- `beszel_quiet_hours` resource, managing quiet hours windows (`one-time` or `daily`, global or
+  scoped to one system) that mute alert notifications for a user. Rejects, at plan time, windows
+  Beszel accepts but can never match (one-time with `end` not after `start`, daily with the same
+  UTC time of day for `start` and `end`).
+- Plan time validation of `webhooks` entries on `beszel_user_settings`: each must look like
+  `scheme://...`. Beszel itself does not validate them server side.
+
+### Fixed
+
+- `beszel_user_settings` no longer wipes the other keys Beszel keeps in the same settings blob
+  (units, language, layout, ...) when it creates or updates a record.
+
 ## v0.3.0 (2026-07-09)
 
 ### Added

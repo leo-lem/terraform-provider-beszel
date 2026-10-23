@@ -18,3 +18,6 @@ crash.*.log
 .experiments
 
 .claude/settings.local.json
+
+# local build artifacts (caches, helper scripts)
+/build/

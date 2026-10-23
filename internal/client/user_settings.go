@@ -2,15 +2,67 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 )
 
-// UserSettingsData is the shape of the "settings" JSON blob on a user_settings record.
+// UserSettingsData is the shape of the "settings" JSON blob on a user_settings
+// record. Beszel replaces the whole blob on write, and the web UI stores many
+// other preferences in it (units, language, layout), so keys this provider
+// does not manage are carried through untouched in extra.
 type UserSettingsData struct {
-	ChartTime string   `json:"chartTime,omitempty"`
-	Emails    []string `json:"emails"`
+	Emails   []string
+	Webhooks []string
+
+	extra map[string]json.RawMessage
+}
+
+// UnmarshalJSON decodes the managed fields and keeps every other key.
+func (d *UserSettingsData) UnmarshalJSON(b []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	*d = UserSettingsData{}
+	if v, ok := raw["emails"]; ok {
+		if err := json.Unmarshal(v, &d.Emails); err != nil {
+			return err
+		}
+		delete(raw, "emails")
+	}
+	if v, ok := raw["webhooks"]; ok {
+		if err := json.Unmarshal(v, &d.Webhooks); err != nil {
+			return err
+		}
+		delete(raw, "webhooks")
+	}
+	d.extra = raw
+	return nil
+}
+
+// MarshalJSON encodes the managed fields over the preserved extra keys.
+func (d UserSettingsData) MarshalJSON() ([]byte, error) {
+	out := make(map[string]json.RawMessage, len(d.extra)+2)
+	for k, v := range d.extra {
+		out[k] = v
+	}
+	emails, webhooks := d.Emails, d.Webhooks
+	if emails == nil {
+		emails = []string{}
+	}
+	if webhooks == nil {
+		webhooks = []string{}
+	}
+	var err error
+	if out["emails"], err = json.Marshal(emails); err != nil {
+		return nil, err
+	}
+	if out["webhooks"], err = json.Marshal(webhooks); err != nil {
+		return nil, err
+	}
+	return json.Marshal(out)
 }
 
 // UserSettings is a Beszel "user_settings" collection record. There is a

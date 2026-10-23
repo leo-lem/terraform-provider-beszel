@@ -3,12 +3,12 @@
 page_title: "beszel_user_settings Resource - beszel"
 subcategory: ""
 description: |-
-  Manages a user's notification settings. Singleton per user.
+  Manages a user's notification settings (email addresses and webhook / push notification URLs). Singleton per user. Other keys Beszel stores in the same settings blob (units, language, layout, ...) are left untouched.
 ---
 
 # beszel_user_settings (Resource)
 
-Manages a user's notification settings. Singleton per user.
+Manages a user's notification settings (email addresses and webhook / push notification URLs). Singleton per user. Other keys Beszel stores in the same settings blob (units, language, layout, ...) are left untouched.
 
 ## Example Usage
 
@@ -16,6 +16,9 @@ Manages a user's notification settings. Singleton per user.
 resource "beszel_user_settings" "example" {
   user   = beszel_user.example.id
   emails = ["alerts@example.com"]
+
+  # Webhook / push notifications, as Shoutrrr URLs (https://containrrr.dev/shoutrrr/).
+  webhooks = ["generic://example.com/beszel-hook"]
 }
 ```
 
@@ -26,6 +29,10 @@ resource "beszel_user_settings" "example" {
 
 - `emails` (List of String) Email addresses that receive alert notifications for this user.
 - `user` (String) ID of the user these settings belong to.
+
+### Optional
+
+- `webhooks` (List of String, Sensitive) Webhook / push notification URLs that receive alert notifications for this user, in Shoutrrr URL format (for example telegram://token@telegram?chats=id or generic://example.com/hook). See https://containrrr.dev/shoutrrr/. Treated as sensitive because these URLs usually embed credentials.
 
 ### Read-Only
 
